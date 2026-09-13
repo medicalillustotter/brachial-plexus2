@@ -1,0 +1,447 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>腕神経叢 解剖学5択クイズ</title>
+  <style>
+    :root {
+      --primary-color: #2b6cb0;
+      --primary-hover: #2c5282;
+      --success-color: #38a169;
+      --error-color: #e53e3e;
+      --bg-color: #f7fafc;
+      --card-bg: #ffffff;
+      --text-color: #2d3748;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    }
+
+    body {
+      background-color: var(--bg-color);
+      color: var(--text-color);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      padding: 16px;
+    }
+
+    .container {
+      width: 100%;
+      max-width: 650px;
+      background: var(--card-bg);
+      border-radius: 12px;
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+      padding: 24px;
+    }
+
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+      padding-bottom: 12px;
+      border-bottom: 2px solid #edf2f7;
+    }
+
+    .title {
+      font-size: 1.25rem;
+      font-weight: bold;
+      color: var(--primary-color);
+    }
+
+    .progress {
+      font-size: 0.9rem;
+      color: #718096;
+      font-weight: bold;
+    }
+
+    .loading, .error-message {
+      text-align: center;
+      padding: 40px 0;
+      font-weight: bold;
+      color: var(--primary-color);
+    }
+
+    .error-message {
+      color: var(--error-color);
+    }
+
+    .category-badge {
+      display: inline-block;
+      background-color: #ebf8ff;
+      color: #2b6cb0;
+      font-size: 0.8rem;
+      font-weight: bold;
+      padding: 4px 10px;
+      border-radius: 12px;
+      margin-bottom: 12px;
+    }
+
+    .question-text {
+      font-size: 1.1rem;
+      font-weight: bold;
+      line-height: 1.6;
+      margin-bottom: 16px;
+    }
+
+    .image-container {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+
+    .question-image {
+      max-width: 100%;
+      max-height: 320px;
+      border-radius: 8px;
+      border: 1px solid #e2e8f0;
+      object-fit: contain;
+    }
+
+    .choices-container {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+
+    .choice-btn {
+      width: 100%;
+      text-align: left;
+      padding: 14px 18px;
+      font-size: 1rem;
+      background-color: #fff;
+      border: 2px solid #e2e8f0;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      display: flex;
+      align-items: center;
+    }
+
+    .choice-btn:hover:not(:disabled) {
+      border-color: var(--primary-color);
+      background-color: #ebf8ff;
+    }
+
+    .choice-number {
+      display: inline-flex;
+      justify-content: center;
+      align-items: center;
+      width: 26px;
+      height: 26px;
+      border-radius: 50%;
+      background-color: #edf2f7;
+      color: #4a5568;
+      font-weight: bold;
+      font-size: 0.85rem;
+      margin-right: 12px;
+      flex-shrink: 0;
+    }
+
+    .choice-btn.correct {
+      background-color: #c6f6d5 !important;
+      border-color: var(--success-color) !important;
+      color: #22543d;
+      font-weight: bold;
+    }
+
+    .choice-btn.correct .choice-number {
+      background-color: var(--success-color);
+      color: white;
+    }
+
+    .choice-btn.incorrect {
+      background-color: #fed7d7 !important;
+      border-color: var(--error-color) !important;
+      color: #742a2a;
+    }
+
+    .choice-btn.incorrect .choice-number {
+      background-color: var(--error-color);
+      color: white;
+    }
+
+    .explanation-card {
+      background-color: #f7fafc;
+      border-left: 4px solid var(--primary-color);
+      padding: 16px;
+      border-radius: 4px;
+      margin-bottom: 20px;
+      display: none;
+    }
+
+    .explanation-title {
+      font-size: 0.95rem;
+      font-weight: bold;
+      margin-bottom: 6px;
+    }
+
+    .explanation-title.is-correct { color: var(--success-color); }
+    .explanation-title.is-incorrect { color: var(--error-color); }
+
+    .explanation-text {
+      font-size: 0.95rem;
+      line-height: 1.5;
+      color: #4a5568;
+    }
+
+    .next-btn {
+      width: 100%;
+      padding: 14px;
+      font-size: 1rem;
+      font-weight: bold;
+      color: white;
+      background-color: var(--primary-color);
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      display: none;
+      transition: background-color 0.2s;
+    }
+
+    .next-btn:hover {
+      background-color: var(--primary-hover);
+    }
+
+    /* リザルト画面 */
+    .result-box {
+      text-align: center;
+      padding: 20px 0;
+    }
+
+    .result-score {
+      font-size: 2.5rem;
+      font-weight: bold;
+      color: var(--primary-color);
+      margin: 16px 0;
+    }
+
+    .restart-btn {
+      padding: 12px 24px;
+      font-size: 1rem;
+      font-weight: bold;
+      color: white;
+      background-color: var(--primary-color);
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <div class="header">
+      <div class="title">腕神経叢 5択クイズ</div>
+      <div class="progress" id="progress-text">-- / --</div>
+    </div>
+
+    <!-- ローディング状態 -->
+    <div id="loading-view" class="loading">
+      問題データを読み込み中...
+    </div>
+
+    <!-- 問題表示エリア -->
+    <div id="quiz-view" style="display: none;">
+      <div id="category-badge" class="category-badge">カテゴリ</div>
+      <div id="question-text" class="question-text"></div>
+      
+      <div id="image-container" class="image-container" style="display: none;">
+        <img id="question-image" class="question-image" src="" alt="問題画像">
+      </div>
+
+      <div id="choices-container" class="choices-container">
+        <!-- 選択肢ボタンが動的に挿入されます -->
+      </div>
+
+      <div id="explanation-card" class="explanation-card">
+        <div id="explanation-title" class="explanation-title"></div>
+        <div id="explanation-text" class="explanation-text"></div>
+      </div>
+
+      <button id="next-btn" class="next-btn" onclick="nextQuestion()">次の問題へ</button>
+    </div>
+
+    <!-- リザルト表示エリア -->
+    <div id="result-view" class="result-box" style="display: none;">
+      <h2>全問終了！</h2>
+      <div class="result-score" id="result-score">0 / 0</div>
+      <p id="result-comment" style="margin-bottom: 20px; color: #718096;"></p>
+      <button class="restart-btn" onclick="restartQuiz()">もう一度挑戦する</button>
+    </div>
+  </div>
+
+  <script>
+    // 設定されたGASのウェブアプリURL
+    const GAS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbzNBMq5KS84z6l92NKgDHPUeoE4llBcwRIohbA8Bz__E2c-OWixa_tgFWi8gDNhmyKo7g/exec";
+
+    let questions = [];
+    let currentIndex = 0;
+    let score = 0;
+    let isAnswered = false;
+
+    // データ読み込み関数
+    async function fetchQuestions() {
+      try {
+        const response = await fetch(GAS_WEB_APP_URL);
+        if (!response.ok) throw new Error("ネットワーク応答が正常ではありません");
+        questions = await response.json();
+        
+        if (!questions || questions.length === 0) {
+          throw new Error("取得できた問題データが空です");
+        }
+
+        document.getElementById("loading-view").style.display = "none";
+        document.getElementById("quiz-view").style.display = "block";
+        showQuestion();
+      } catch (err) {
+        console.error("Fetch Error:", err);
+        const loadingElem = document.getElementById("loading-view");
+        loadingElem.className = "error-message";
+        loadingElem.innerHTML = "問題データの読み込みに失敗しました。<br>GASのURLまたはスプレッドシートの設定をご確認ください。";
+      }
+    }
+
+    // 問題の表示
+    function showQuestion() {
+      isAnswered = false;
+      const q = questions[currentIndex];
+
+      // プログレス表示
+      document.getElementById("progress-text").textContent = `${currentIndex + 1} / ${questions.length}`;
+
+      // カテゴリ・問題文
+      document.getElementById("category-badge").textContent = q.category || "解剖学";
+      document.getElementById("question-text").textContent = q.text;
+
+      // 画像表示の切り替え
+      const imgContainer = document.getElementById("image-container");
+      const imgElem = document.getElementById("question-image");
+      if (q.img && q.img.toString().trim() !== "") {
+        imgElem.src = q.img;
+        imgContainer.style.display = "block";
+      } else {
+        imgContainer.style.display = "none";
+        imgElem.src = "";
+      }
+
+      // 選択肢（1〜5択）の描画
+      const choicesContainer = document.getElementById("choices-container");
+      choicesContainer.innerHTML = "";
+
+      q.choices.forEach((choiceText, idx) => {
+        // 空の選択肢はスキップ
+        if (!choiceText || choiceText.toString().trim() === "") return;
+
+        const choiceNum = idx + 1;
+        const btn = document.createElement("button");
+        btn.className = "choice-btn";
+        btn.onclick = () => selectAnswer(choiceNum);
+
+        btn.innerHTML = `
+          <span class="choice-number">${choiceNum}</span>
+          <span>${choiceText}</span>
+        `;
+        choicesContainer.appendChild(btn);
+      });
+
+      // 解説と「次へ」ボタンを隠す
+      document.getElementById("explanation-card").style.display = "none";
+      document.getElementById("next-btn").style.display = "none";
+    }
+
+    // 回答選択時の判定処理
+    function selectAnswer(selectedIndex) {
+      if (isAnswered) return;
+      isAnswered = true;
+
+      const q = questions[currentIndex];
+      const correctIndex = Number(q.answer);
+      const buttons = document.querySelectorAll(".choice-btn");
+
+      buttons.forEach((btn, idx) => {
+        btn.disabled = true; // 二重クリック防止
+        const currentChoiceNum = idx + 1;
+
+        if (currentChoiceNum === correctIndex) {
+          btn.classList.add("correct");
+        }
+        if (currentChoiceNum === selectedIndex && selectedIndex !== correctIndex) {
+          btn.classList.add("incorrect");
+        }
+      });
+
+      // 解説の表示設定
+      const expCard = document.getElementById("explanation-card");
+      const expTitle = document.getElementById("explanation-title");
+      const expText = document.getElementById("explanation-text");
+
+      if (selectedIndex === correctIndex) {
+        score++;
+        expTitle.textContent = "【正解】";
+        expTitle.className = "explanation-title is-correct";
+      } else {
+        expTitle.textContent = `【不正解】 正解は ${correctIndex} です`;
+        expTitle.className = "explanation-title is-incorrect";
+      }
+
+      expText.textContent = q.exp || "解説はありません。";
+      expCard.style.display = "block";
+
+      // 「次へ」ボタンを表示
+      const nextBtn = document.getElementById("next-btn");
+      if (currentIndex === questions.length - 1) {
+        nextBtn.textContent = "結果を見る";
+      } else {
+        nextBtn.textContent = "次の問題へ";
+      }
+      nextBtn.style.display = "block";
+    }
+
+    // 次の問題へ移る
+    function nextQuestion() {
+      currentIndex++;
+      if (currentIndex < questions.length) {
+        showQuestion();
+      } else {
+        showResult();
+      }
+    }
+
+    // リザルト画面表示
+    function showResult() {
+      document.getElementById("quiz-view").style.display = "none";
+      document.getElementById("result-view").style.display = "block";
+
+      document.getElementById("result-score").textContent = `${score} / ${questions.length}`;
+
+      const rate = score / questions.length;
+      let comment = "";
+      if (rate === 1) comment = "素晴らしい！腕神経叢を完全にマスターしています！";
+      else if (rate >= 0.7) comment = "惜しい！あと一歩で満点です。高位や支配筋を復習しましょう。";
+      else comment = "繰り返し練習して、腕神経叢の分岐と支配筋を攻略しましょう！";
+
+      document.getElementById("result-comment").textContent = comment;
+    }
+
+    // クイズの再スタート
+    function restartQuiz() {
+      currentIndex = 0;
+      score = 0;
+      document.getElementById("result-view").style.display = "none";
+      document.getElementById("quiz-view").style.display = "block";
+      showQuestion();
+    }
+
+    // アプリ起動時の自動実行
+    window.onload = fetchQuestions;
+  </script>
+</body>
+</html>
