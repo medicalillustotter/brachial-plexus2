@@ -73,6 +73,46 @@
       color: var(--error-color);
     }
 
+    /* モード選択画面 */
+    .mode-selection {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      margin-top: 10px;
+    }
+
+    .mode-btn {
+      width: 100%;
+      padding: 16px;
+      font-size: 1.05rem;
+      font-weight: bold;
+      color: #2b6cb0;
+      background-color: #ebf8ff;
+      border: 2px solid #bee3f8;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      text-align: center;
+    }
+
+    .mode-btn:hover {
+      background-color: var(--primary-color);
+      color: white;
+      border-color: var(--primary-color);
+    }
+
+    .mode-btn.random-mode {
+      background-color: #feebc8;
+      color: #c05621;
+      border-color: #fbd38d;
+    }
+
+    .mode-btn.random-mode:hover {
+      background-color: #dd6b20;
+      color: white;
+      border-color: #dd6b20;
+    }
+
     .category-badge {
       display: inline-block;
       background-color: #ebf8ff;
@@ -192,7 +232,7 @@
       color: #4a5568;
     }
 
-    .next-btn {
+    .next-btn, .top-btn {
       width: 100%;
       padding: 14px;
       font-size: 1rem;
@@ -202,15 +242,24 @@
       border: none;
       border-radius: 8px;
       cursor: pointer;
-      display: none;
       transition: background-color 0.2s;
     }
 
-    .next-btn:hover {
+    .next-btn:hover, .top-btn:hover {
       background-color: var(--primary-hover);
     }
 
-    /* リザルト画面 */
+    .top-btn-outline {
+      background-color: transparent;
+      color: var(--primary-color);
+      border: 2px solid var(--primary-color);
+      margin-top: 10px;
+    }
+
+    .top-btn-outline:hover {
+      background-color: #ebf8ff;
+    }
+
     .result-box {
       text-align: center;
       padding: 20px 0;
@@ -222,17 +271,6 @@
       color: var(--primary-color);
       margin: 16px 0;
     }
-
-    .restart-btn {
-      padding: 12px 24px;
-      font-size: 1rem;
-      font-weight: bold;
-      color: white;
-      background-color: var(--primary-color);
-      border: none;
-      border-radius: 8px;
-      cursor: pointer;
-    }
   </style>
 </head>
 <body>
@@ -240,15 +278,27 @@
   <div class="container">
     <div class="header">
       <div class="title">腕神経叢 5択クイズ</div>
-      <div class="progress" id="progress-text">-- / --</div>
+      <div class="progress" id="progress-text">---</div>
     </div>
 
-    <!-- ローディング状態 -->
+    <!-- ローディング表示 -->
     <div id="loading-view" class="loading">
       問題データを読み込み中...
     </div>
 
-    <!-- 問題表示エリア -->
+    <!-- モード選択画面 -->
+    <div id="mode-view" style="display: none;">
+      <h3 style="margin-bottom: 16px; text-align: center; color: #4a5568;">学習モードを選択してください</h3>
+      <div class="mode-selection">
+        <button class="mode-btn" onclick="startMode('外側グループ')">外側グループの問題</button>
+        <button class="mode-btn" onclick="startMode('後ろ側グループ')">後ろ側グループの問題</button>
+        <button class="mode-btn" onclick="startMode('内側グループ')">内側グループの問題</button>
+        <button class="mode-btn" onclick="startMode('過去問')">過去問</button>
+        <button class="mode-btn random-mode" onclick="startMode('総合ランダム')">🎲 総合ランダム問題（全範囲）</button>
+      </div>
+    </div>
+
+    <!-- クイズ解答画面 -->
     <div id="quiz-view" style="display: none;">
       <div id="category-badge" class="category-badge">カテゴリ</div>
       <div id="question-text" class="question-text"></div>
@@ -257,74 +307,99 @@
         <img id="question-image" class="question-image" src="" alt="問題画像">
       </div>
 
-      <div id="choices-container" class="choices-container">
-        <!-- 選択肢ボタンが動的に挿入されます -->
-      </div>
+      <div id="choices-container" class="choices-container"></div>
 
       <div id="explanation-card" class="explanation-card">
         <div id="explanation-title" class="explanation-title"></div>
         <div id="explanation-text" class="explanation-text"></div>
       </div>
 
-      <button id="next-btn" class="next-btn" onclick="nextQuestion()">次の問題へ</button>
+      <button id="next-btn" class="next-btn" style="display: none;" onclick="nextQuestion()">次の問題へ</button>
     </div>
 
-    <!-- リザルト表示エリア -->
+    <!-- 結果画面 -->
     <div id="result-view" class="result-box" style="display: none;">
       <h2>全問終了！</h2>
       <div class="result-score" id="result-score">0 / 0</div>
       <p id="result-comment" style="margin-bottom: 20px; color: #718096;"></p>
-      <button class="restart-btn" onclick="restartQuiz()">もう一度挑戦する</button>
+      <button class="top-btn" onclick="showModeSelection()">モード選択に戻る</button>
     </div>
   </div>
 
   <script>
-    // 設定されたGASのウェブアプリURL
-    const GAS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbzNBMq5KS84z6l92NKgDHPUeoE4llBcwRIohbA8Bz__E2c-OWixa_tgFWi8gDNhmyKo7g/exec";
+    // ★ご自身のGASデプロイURLを設定してください
+    const GAS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbzz04O2U7j0K3EaO1e2_Example/exec";
 
-    let questions = [];
+    let allQuestions = [];
+    let currentQuestions = [];
     let currentIndex = 0;
     let score = 0;
     let isAnswered = false;
 
-    // データ読み込み関数
+    // データ全件取得
     async function fetchQuestions() {
       try {
         const response = await fetch(GAS_WEB_APP_URL);
-        if (!response.ok) throw new Error("ネットワーク応答が正常ではありません");
-        questions = await response.json();
+        if (!response.ok) throw new Error("通信エラーが発生しました");
+        allQuestions = await response.json();
         
-        if (!questions || questions.length === 0) {
-          throw new Error("取得できた問題データが空です");
+        if (!allQuestions || allQuestions.length === 0) {
+          throw new Error("取得できた問題データがありません");
         }
 
         document.getElementById("loading-view").style.display = "none";
-        document.getElementById("quiz-view").style.display = "block";
-        showQuestion();
+        showModeSelection();
       } catch (err) {
         console.error("Fetch Error:", err);
         const loadingElem = document.getElementById("loading-view");
         loadingElem.className = "error-message";
-        loadingElem.innerHTML = "問題データの読み込みに失敗しました。<br>GASのURLまたはスプレッドシートの設定をご確認ください。";
+        loadingElem.innerHTML = "問題データの読み込みに失敗しました。<br>GASのURLとスプレッドシートをご確認ください。";
       }
     }
 
-    // 問題の表示
+    // モード選択画面の表示
+    function showModeSelection() {
+      document.getElementById("quiz-view").style.display = "none";
+      document.getElementById("result-view").style.display = "none";
+      document.getElementById("mode-view").style.display = "block";
+      document.getElementById("progress-text").textContent = "モード選択";
+    }
+
+    // クイズの開始（指定モードの抽出）
+    function startMode(selectedMode) {
+      if (selectedMode === '総合ランダム') {
+        // 全問題をシャッフル
+        currentQuestions = [...allQuestions].sort(() => Math.random() - 0.5);
+      } else {
+        // カテゴリ名でフィルタリング
+        currentQuestions = allQuestions.filter(q => q.category && q.category.trim() === selectedMode);
+      }
+
+      if (currentQuestions.length === 0) {
+        alert(`「${selectedMode}」に該当する問題が見つかりませんでした。\nスプレッドシートのA列(category)をご確認ください。`);
+        return;
+      }
+
+      currentIndex = 0;
+      score = 0;
+      document.getElementById("mode-view").style.display = "none";
+      document.getElementById("quiz-view").style.display = "block";
+      showQuestion();
+    }
+
+    // 問題表示
     function showQuestion() {
       isAnswered = false;
-      const q = questions[currentIndex];
+      const q = currentQuestions[currentIndex];
 
-      // プログレス表示
-      document.getElementById("progress-text").textContent = `${currentIndex + 1} / ${questions.length}`;
-
-      // カテゴリ・問題文
+      document.getElementById("progress-text").textContent = `${currentIndex + 1} / ${currentQuestions.length}`;
       document.getElementById("category-badge").textContent = q.category || "解剖学";
       document.getElementById("question-text").textContent = q.text;
 
-      // 画像表示の切り替え
+      // 画像制御
       const imgContainer = document.getElementById("image-container");
       const imgElem = document.getElementById("question-image");
-      if (q.img && q.img.toString().trim() !== "") {
+      if (q.img && q.img.trim() !== "") {
         imgElem.src = q.img;
         imgContainer.style.display = "block";
       } else {
@@ -332,12 +407,11 @@
         imgElem.src = "";
       }
 
-      // 選択肢（1〜5択）の描画
+      // 選択肢描画
       const choicesContainer = document.getElementById("choices-container");
       choicesContainer.innerHTML = "";
 
       q.choices.forEach((choiceText, idx) => {
-        // 空の選択肢はスキップ
         if (!choiceText || choiceText.toString().trim() === "") return;
 
         const choiceNum = idx + 1;
@@ -352,22 +426,21 @@
         choicesContainer.appendChild(btn);
       });
 
-      // 解説と「次へ」ボタンを隠す
       document.getElementById("explanation-card").style.display = "none";
       document.getElementById("next-btn").style.display = "none";
     }
 
-    // 回答選択時の判定処理
+    // 解答判定
     function selectAnswer(selectedIndex) {
       if (isAnswered) return;
       isAnswered = true;
 
-      const q = questions[currentIndex];
+      const q = currentQuestions[currentIndex];
       const correctIndex = Number(q.answer);
       const buttons = document.querySelectorAll(".choice-btn");
 
       buttons.forEach((btn, idx) => {
-        btn.disabled = true; // 二重クリック防止
+        btn.disabled = true;
         const currentChoiceNum = idx + 1;
 
         if (currentChoiceNum === correctIndex) {
@@ -378,7 +451,6 @@
         }
       });
 
-      // 解説の表示設定
       const expCard = document.getElementById("explanation-card");
       const expTitle = document.getElementById("explanation-title");
       const expText = document.getElementById("explanation-text");
@@ -395,9 +467,8 @@
       expText.textContent = q.exp || "解説はありません。";
       expCard.style.display = "block";
 
-      // 「次へ」ボタンを表示
       const nextBtn = document.getElementById("next-btn");
-      if (currentIndex === questions.length - 1) {
+      if (currentIndex === currentQuestions.length - 1) {
         nextBtn.textContent = "結果を見る";
       } else {
         nextBtn.textContent = "次の問題へ";
@@ -405,42 +476,30 @@
       nextBtn.style.display = "block";
     }
 
-    // 次の問題へ移る
     function nextQuestion() {
       currentIndex++;
-      if (currentIndex < questions.length) {
+      if (currentIndex < currentQuestions.length) {
         showQuestion();
       } else {
         showResult();
       }
     }
 
-    // リザルト画面表示
     function showResult() {
       document.getElementById("quiz-view").style.display = "none";
       document.getElementById("result-view").style.display = "block";
 
-      document.getElementById("result-score").textContent = `${score} / ${questions.length}`;
+      document.getElementById("result-score").textContent = `${score} / ${currentQuestions.length}`;
 
-      const rate = score / questions.length;
+      const rate = score / currentQuestions.length;
       let comment = "";
-      if (rate === 1) comment = "素晴らしい！腕神経叢を完全にマスターしています！";
-      else if (rate >= 0.7) comment = "惜しい！あと一歩で満点です。高位や支配筋を復習しましょう。";
-      else comment = "繰り返し練習して、腕神経叢の分岐と支配筋を攻略しましょう！";
+      if (rate === 1) comment = "素晴らしい！この範囲は完璧にマスターしています！";
+      else if (rate >= 0.7) comment = "あと一歩です！間違えた箇所の分岐や神経根を復習しておきましょう。";
+      else comment = "繰り返し解いて確実に頭に入れていきましょう！";
 
       document.getElementById("result-comment").textContent = comment;
     }
 
-    // クイズの再スタート
-    function restartQuiz() {
-      currentIndex = 0;
-      score = 0;
-      document.getElementById("result-view").style.display = "none";
-      document.getElementById("quiz-view").style.display = "block";
-      showQuestion();
-    }
-
-    // アプリ起動時の自動実行
     window.onload = fetchQuestions;
   </script>
 </body>
