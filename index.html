@@ -175,7 +175,7 @@
       margin-bottom: 20px;
     }
 
-    .question-image {
+    .question-image, .exp-image {
       max-width: 100%;
       max-height: 320px;
       border-radius: 8px;
@@ -269,6 +269,7 @@
       font-size: 0.95rem;
       line-height: 1.5;
       color: #4a5568;
+      margin-bottom: 12px;
     }
 
     .next-btn, .top-btn {
@@ -331,15 +332,21 @@
       <div id="category-badge" class="category-badge">カテゴリ</div>
       <div id="question-text" class="question-text"></div>
       
+      <!-- 問題画像 -->
       <div id="image-container" class="image-container" style="display: none;">
         <img id="question-image" class="question-image" src="" alt="問題画像">
       </div>
 
       <div id="choices-container" class="choices-container"></div>
 
+      <!-- 解説カード -->
       <div id="explanation-card" class="explanation-card">
         <div id="explanation-title" class="explanation-title"></div>
         <div id="explanation-text" class="explanation-text"></div>
+        <!-- 解説画像 -->
+        <div id="exp-image-container" class="image-container" style="display: none; margin-bottom: 0;">
+          <img id="exp-image" class="exp-image" src="" alt="解説画像">
+        </div>
       </div>
 
       <button id="next-btn" class="next-btn" style="display: none;" onclick="nextQuestion()">次の問題へ</button>
@@ -422,7 +429,7 @@
       document.getElementById("category-badge").textContent = q.category || "解剖学";
       document.getElementById("question-text").textContent = q.text;
 
-      // 画像制御
+      // 問題画像制御
       const imgContainer = document.getElementById("image-container");
       const imgElem = document.getElementById("question-image");
       if (q.img && q.img.trim() !== "") {
@@ -462,17 +469,17 @@
       isAnswered = true;
 
       const q = currentQuestions[currentIndex];
-      const correctIndex = Number(q.answer);
+      const correctIndices = q.answer.toString().split(',').map(n => Number(n.trim()));
       const buttons = document.querySelectorAll(".choice-btn");
 
       buttons.forEach((btn, idx) => {
         btn.disabled = true;
         const currentChoiceNum = idx + 1;
 
-        if (currentChoiceNum === correctIndex) {
+        if (correctIndices.includes(currentChoiceNum)) {
           btn.classList.add("correct");
         }
-        if (currentChoiceNum === selectedIndex && selectedIndex !== correctIndex) {
+        if (selectedIndex === currentChoiceNum && !correctIndices.includes(currentChoiceNum)) {
           btn.classList.add("incorrect");
         }
       });
@@ -480,17 +487,31 @@
       const expCard = document.getElementById("explanation-card");
       const expTitle = document.getElementById("explanation-title");
       const expText = document.getElementById("explanation-text");
+      const expImgContainer = document.getElementById("exp-image-container");
+      const expImgElem = document.getElementById("exp-image");
 
-      if (selectedIndex === correctIndex) {
+      const isCorrect = correctIndices.includes(selectedIndex);
+
+      if (isCorrect) {
         score++;
         expTitle.textContent = "【正解】";
         expTitle.className = "explanation-title is-correct";
       } else {
-        expTitle.textContent = `【不正解】 正解は ${correctIndex} です`;
+        expTitle.textContent = `【不正解】 正解は ${q.answer} です`;
         expTitle.className = "explanation-title is-incorrect";
       }
 
       expText.textContent = q.exp || "解説はありません。";
+
+      // 解説画像の表示判定
+      if (q.exp_img && q.exp_img.trim() !== "") {
+        expImgElem.src = q.exp_img;
+        expImgContainer.style.display = "block";
+      } else {
+        expImgContainer.style.display = "none";
+        expImgElem.src = "";
+      }
+
       expCard.style.display = "block";
 
       const nextBtn = document.getElementById("next-btn");
