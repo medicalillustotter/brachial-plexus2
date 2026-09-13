@@ -86,31 +86,70 @@
       padding: 16px;
       font-size: 1.05rem;
       font-weight: bold;
-      color: #2b6cb0;
-      background-color: #ebf8ff;
-      border: 2px solid #bee3f8;
       border-radius: 8px;
       cursor: pointer;
       transition: all 0.2s ease;
       text-align: center;
     }
 
-    .mode-btn:hover {
-      background-color: var(--primary-color);
+    /* 外側グループ：赤 */
+    .btn-red {
+      background-color: #fff5f5;
+      color: #c53030;
+      border: 2px solid #feb2b2;
+    }
+    .btn-red:hover {
+      background-color: #e53e3e;
       color: white;
-      border-color: var(--primary-color);
+      border-color: #e53e3e;
     }
 
-    .mode-btn.random-mode {
-      background-color: #feebc8;
-      color: #c05621;
-      border-color: #fbd38d;
+    /* 後ろ側グループ：青 */
+    .btn-blue {
+      background-color: #ebf8ff;
+      color: #2b6cb0;
+      border: 2px solid #bee3f8;
+    }
+    .btn-blue:hover {
+      background-color: #3182ce;
+      color: white;
+      border-color: #3182ce;
     }
 
-    .mode-btn.random-mode:hover {
-      background-color: #dd6b20;
+    /* 内側グループ：黄色 */
+    .btn-yellow {
+      background-color: #fffff0;
+      color: #b7791f;
+      border: 2px solid #fefcbf;
+    }
+    .btn-yellow:hover {
+      background-color: #d69e2e;
       color: white;
-      border-color: #dd6b20;
+      border-color: #d69e2e;
+    }
+
+    /* 過去問：緑 */
+    .btn-green {
+      background-color: #f0fff4;
+      color: #276749;
+      border: 2px solid #c6f6d5;
+    }
+    .btn-green:hover {
+      background-color: #38a169;
+      color: white;
+      border-color: #38a169;
+    }
+
+    /* 総合ランダム：グレー */
+    .btn-gray {
+      background-color: #f7fafc;
+      color: #4a5568;
+      border: 2px solid #e2e8f0;
+    }
+    .btn-gray:hover {
+      background-color: #718096;
+      color: white;
+      border-color: #718096;
     }
 
     .category-badge {
@@ -279,11 +318,11 @@
     <div id="mode-view" style="display: none;">
       <h3 style="margin-bottom: 16px; text-align: center; color: #4a5568;">学習モードを選択してください</h3>
       <div class="mode-selection">
-        <button class="mode-btn" onclick="startMode('外側グループ')">外側グループの問題</button>
-        <button class="mode-btn" onclick="startMode('後ろ側グループ')">後ろ側グループの問題</button>
-        <button class="mode-btn" onclick="startMode('内側グループ')">内側グループの問題</button>
-        <button class="mode-btn" onclick="startMode('過去問')">過去問</button>
-        <button class="mode-btn random-mode" onclick="startMode('総合ランダム')">🎲 総合ランダム問題（全範囲）</button>
+        <button class="mode-btn btn-red" onclick="startMode('外側グループ')">外側グループの問題</button>
+        <button class="mode-btn btn-blue" onclick="startMode('後ろ側グループ')">後ろ側グループの問題</button>
+        <button class="mode-btn btn-yellow" onclick="startMode('内側グループ')">内側グループの問題</button>
+        <button class="mode-btn btn-green" onclick="startMode('過去問')">過去問</button>
+        <button class="mode-btn btn-gray" onclick="startMode('総合ランダム')">総合ランダム問題（全範囲）</button>
       </div>
     </div>
 
@@ -316,8 +355,8 @@
   </div>
 
   <script>
-    // 指定いただいたGAS WebアプリURL
-    const GAS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbzNBMq5KS84z6l92NKgDHPUeoE4llBcwRIohbA8Bz__E2c-OWixa_tgFWi8gDNhmyKo7g/exec";
+    // ★GASのWebアプリURL（/exec で終わるもの）を設定してください
+    const GAS_WEB_APP_URL = "ここにGASのURLを貼り付け";
 
     let allQuestions = [];
     let currentQuestions = [];
@@ -342,7 +381,7 @@
         console.error("Fetch Error:", err);
         const loadingElem = document.getElementById("loading-view");
         loadingElem.className = "error-message";
-        loadingElem.innerHTML = "問題データの読み込みに失敗しました。<br>スプレッドシートの入力内容をご確認ください。";
+        loadingElem.innerHTML = "問題データの読み込みに失敗しました。<br>GASのURLとスプレッドシートをご確認ください。";
       }
     }
 
